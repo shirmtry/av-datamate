@@ -2,7 +2,7 @@
 
 Autonomous-driving dataset pipeline: pick permissively licensed detection
 datasets on the Hugging Face hub, **ingest → validate → convert to YOLO →
-split → report → publish**, plus a Gradio viewer that ships as a Docker Space.
+split → report → publish**, plus a Gradio viewer that ships as a Docker image.
 
 Target task: 2D object detection with a fixed 7-class taxonomy —
 `car, truck, bus, pedestrian, cyclist, traffic_light, traffic_sign`.
