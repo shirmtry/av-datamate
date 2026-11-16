@@ -20,9 +20,9 @@ publicly licensed detection datasets on the Hugging Face hub.
 av-datamate/v1/
 ├── dataset/
 │   ├── data.yaml                  # path/train/val/test + nc=7 + names
+│   ├── splits.jsonl               # one row per published image: uid, source, group, split, box list
 │   ├── images/{train,val,test}/   # <uid>.jpg
 │   └── labels/{train,val,test}/   # <uid>.txt, one "cls cx cy w h" per box, normalised
-├── splits.jsonl                   # one row per published image: uid, source, group, split, box list
 ├── report.json                    # machine-readable quality report
 ├── report.md                      # human-readable quality report
 ├── validated.jsonl                # samples that passed validation (provenance)
@@ -98,7 +98,7 @@ the dataset). Summary of the published version:
 | splits | train 266 / val 20 / test 29 images over 31 scene groups |
 | class distribution (boxes) | car 406, truck 84, bus 1016, pedestrian 85, cyclist 470, traffic_light 0, traffic_sign 0 |
 | images per source | thundarstrom 134, Abtinzandi 48, visaitech 133 |
-| resolution | 640×640 (CCTV source) and 1280×720 (dashcam sources) |
+| resolutions | 640×640 (all CCTV frames + 32 ROD frames), 640×480 (all dashcam frames), 16 ROD frames between 345×196 and 999×756 |
 | payload size | ~22 MB for 315 images + labels |
 
 ## Known limitations

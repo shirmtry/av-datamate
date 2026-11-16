@@ -24,9 +24,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from huggingface_hub import HfApi  # noqa: E402
+from huggingface_hub.errors import HfHubHTTPError  # noqa: E402
 
 from avdatamate.config import Layout, PipelineConfig  # noqa: E402
-from avdatamate.publish import DATASET_DIR_IN_REPO, detect_repo_type, publish_dataset  # noqa: E402
+from avdatamate.publish import (  # noqa: E402
+    DATASET_DIR_IN_REPO,
+    detect_repo_type,
+    load_token_file,
+    publish_dataset,
+)
 
 DEFAULT_SPACE = "Huy1223/av-datamate"
 DEFAULT_DATASET_REPO = "Huy1223/datamate_models"
@@ -157,6 +163,29 @@ def dump_build_hint(api: HfApi, space: str, stage: str, logger=print) -> None:
         logger(f"could not fetch build log ({type(exc).__name__}); inspect the Space page")
 
 
+def create_space(api: HfApi, space: str, logger=print) -> bool:
+    """True when the Space exists. HF answers 402 for free cpu-basic Docker Spaces without PRO."""
+    try:
+        api.create_repo(
+            repo_id=space,
+            repo_type="space",
+            space_sdk="docker",
+            space_hardware="cpu-basic",
+            exist_ok=True,
+        )
+    except HfHubHTTPError as exc:
+        status = getattr(exc.response, "status_code", None)
+        if status != 402:
+            raise
+        logger(
+            f"SPACE SKIPPED: {space} cannot be created - Hugging Face requires a PRO subscription "
+            "for free cpu-basic Docker Spaces (https://huggingface.co/pro). Dataset publish continues."
+        )
+        return False
+    logger(f"space ready: {space}")
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--space", default=DEFAULT_SPACE)
@@ -168,8 +197,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--skip-space", action="store_true", help="only upload the dataset")
     parser.add_argument("--timeout", type=int, default=1200, help="runtime polling timeout (s)")
     parser.add_argument("--no-wait", action="store_true")
+    parser.add_argument("--token-file", type=Path, help="read the token from this file into HF_TOKEN (value never printed)")
     args = parser.parse_args(argv)
 
+    if args.token_file:
+        load_token_file(args.token_file)
     token = os.environ.get("HF_TOKEN", "").strip()
     if not token:
         print("HF_TOKEN is not set - refusing to continue", file=sys.stderr)
@@ -178,26 +210,28 @@ def main(argv: list[str] | None = None) -> int:
     me = api.whoami()
     print(f"authenticated as {me['name']} (token not printed)")
 
-    if not args.skip_space:
-        api.create_repo(
-            repo_id=args.space,
-            repo_type="space",
-            space_sdk="docker",
-            space_hardware="cpu-basic",
-            exist_ok=True,
-        )
-        print(f"space ready: {args.space}")
+    space_ready = not args.skip_space and create_space(api, args.space)
+    if space_ready:
         upload_space_code(api, args.space, args.version)
 
+    published = False
     if not args.code_only:
         cfg = PipelineConfig.load(args.config)
         layout = Layout(args.out)
         repo_type = detect_repo_type(api, args.dataset_repo)
         print(f"{args.dataset_repo} is repo_type={repo_type}")
         result = publish_dataset(cfg, layout, args.dataset_repo, args.version, token=token)
+        published = True
         print(f"dataset published: {result['files']} files -> {result['url']}")
 
-    if not args.skip_space and not args.no_wait:
+    if args.skip_space:
+        space_state = "skipped (--skip-space)"
+    elif space_ready:
+        space_state = "ready"
+    else:
+        space_state = "NOT DEPLOYED - see the billing message above"
+    print(f"summary: space={space_state}, dataset={'published' if published else 'skipped'}")
+    if space_ready and not args.no_wait:
         stage = poll_runtime(api, args.space, args.timeout)
         print(f"final space stage: {stage}")
         return 0 if stage == "RUNNING" else 1
