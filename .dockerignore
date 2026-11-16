@@ -1,0 +1,31 @@
+# version control, caches, generated artefacts
+.git
+.github
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.scratch
+.venv
+venv
+__pycache__
+*.py[cod]
+*.egg-info
+build
+dist
+.coverage
+
+# pipeline data and secrets must never enter the image
+out
+cache
+datasets
+HF.txt
+.env
+*.token
+
+# read-only reference clones (huge, GPL/AGPL-adjacent, not needed at runtime)
+third_party
+
+# docs not needed to build or run
+DATASET_CARD.md
+THIRD_PARTY.md
+README_space.md

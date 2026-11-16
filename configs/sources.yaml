@@ -1,0 +1,99 @@
+version: 1
+target_classes:
+  - car
+  - truck
+  - bus
+  - pedestrian
+  - cyclist
+  - traffic_light
+  - traffic_sign
+
+sources:
+  - id: thundarstrom/traffic-vehicle-detection
+    repo_type: dataset
+    license: cc-by-4.0
+    license_source: "front matter of README.md (license: cc-by-4.0)"
+    upstream_samples: 23319
+    pretty_name: Edge-AI Traffic Vehicle Detection (UA-DETRAC CCTV, YOLO)
+    upstream_repo: https://huggingface.co/datasets/thundarstrom/traffic-vehicle-detection
+    format: yolo_dir
+    group_regex: '^(MVI_\d+)'
+    class_names: [car, bus, truck, van]
+    class_map:
+      car: car
+      bus: bus
+      truck: truck
+      van: car
+
+  - id: Abtinzandi/Obstacle-Detection-Dataset-YOLO
+    repo_type: dataset
+    license: mit
+    license_source: "front matter of README.md (license: mit)"
+    upstream_samples: 24326
+    pretty_name: ROD real-time obstacle detection (YOLO, 25 classes)
+    upstream_repo: https://huggingface.co/datasets/Abtinzandi/Obstacle-Detection-Dataset-YOLO
+    format: yolo_dir
+    group_regex: '^IMG_(\d{4})\d'
+    exclude_prefixes:
+      - images_manifest.csv
+      - rename_map.csv
+    # fallback for index -> name if the upstream data.yaml ever stops shipping `names`
+    class_names:
+      - Bike
+      - Building
+      - Car
+      - Person
+      - Stairs
+      - Traffic sign
+      - Electrical Pole
+      - Road
+      - Motorcycle
+      - Dustbin
+      - Dog
+      - Manhole
+      - Tree
+      - Guard rail
+      - Pedestrian crosswalk
+      - Truck
+      - Bus
+      - Bench
+      - Traffic Cone
+      - Fire hydrant
+      - Teraffic Barrel
+      - Plant Pot
+      - Electrical Box
+      - Chair
+      - Bicycle Rack
+    class_map:
+      Car: car
+      Truck: truck
+      Bus: bus
+      Van: car
+      Person: pedestrian
+      Pedestrian: pedestrian
+      Bike: cyclist
+      Bicycle: cyclist
+      Motorcycle: cyclist
+      '2-wheeler': cyclist
+      Traffic sign: traffic_sign
+      Traffic light: traffic_light
+
+  - id: visaitech/vehicle-mixed-traffic-detection
+    repo_type: dataset
+    license: cc-by-4.0
+    license_source: "front matter of README.md (license: cc-by-4.0)"
+    upstream_samples: 293
+    pretty_name: Visaitech mixed-traffic dashcam detection (YOLO)
+    upstream_repo: https://huggingface.co/datasets/visaitech/vehicle-mixed-traffic-detection
+    format: yolo_dir
+    group_regex: '^(V\d+)'
+    exclude_prefixes:
+      - videos/
+      - samples/
+      - attributes.csv
+    class_names: [pedestrian, 2-wheeler, 3-wheeler, 4-wheeler]
+    class_map:
+      pedestrian: pedestrian
+      2-wheeler: cyclist
+      3-wheeler: car
+      4-wheeler: car
