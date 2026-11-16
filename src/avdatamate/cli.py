@@ -16,8 +16,22 @@ from .report import report
 from .split import split
 from .validate import validate
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CONFIG = REPO_ROOT / "configs" / "sources.yaml"
+
+def default_config() -> Path:
+    """$AV_CONFIG, then ./configs relative to the cwd, then alongside an installed package.
+
+    parents[2] of this file is only the repo root when running from a checkout, so the
+    installed console script has to fall back to the working directory.
+    """
+    candidates = []
+    if os.environ.get("AV_CONFIG"):
+        candidates.append(Path(os.environ["AV_CONFIG"]))
+    candidates.append(Path.cwd() / "configs" / "sources.yaml")
+    candidates.extend(parent / "configs" / "sources.yaml" for parent in Path(__file__).resolve().parents)
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return Path.cwd() / "configs" / "sources.yaml"
 
 
 def _logger(prefix: str):
@@ -29,7 +43,7 @@ def _logger(prefix: str):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="avdatamate", description="AV dataset -> YOLO pipeline")
-    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG, help="sources yaml")
+    parser.add_argument("--config", type=Path, default=default_config(), help="sources yaml")
     parser.add_argument("--out", type=Path, default=Path("out"), help="pipeline output directory")
     parser.add_argument("--cache", type=Path, default=None, help="download cache (default <out>/cache)")
     parser.add_argument("--seed", type=int, default=1337)
